@@ -14,12 +14,13 @@ sub get_warning_options
 
     foreach my $line (@lines)
     {
-        my @columns = split(" ", $line);
-        my $option  = $columns[0];
+        my @columns     = split(" ", $line);
+        my $option      = shift @columns;
+        my $description = join(" ", @columns);
 
         if (defined($option))
         {
-            if ($option =~ /-W[^=]+[^-]$/) { $valid_options{$option} = (); }
+            if ($option =~ /-W[^=]+[^-]$/) { $valid_options{$option} = $description;}
             if ($option =~ /(-W.*)=$/) { delete($valid_options{$option}); }
         }
     }
@@ -46,14 +47,29 @@ sub get_cpp_options
     return %options;
 }
 
+sub print_options
+{
+    my $print_descriptions = pop(@_);
+    my %options            = @_;
+
+    foreach my $option (keys(%options))
+    {
+        $print_descriptions
+            ? printf("  %-35s %s\n", $option, $options{$option})
+            : print($option, " ");
+    }
+
+    print "\n";
+}
+
 sub main()
 {
+    my $print_descriptions = grep(/--print-descriptions/, @ARGV);
+
     my %options     = get_warning_options();
     my %cpp_options = get_cpp_options(%options);
 
-    printf("C++ warnings options found: %d\nHere is the list:\n%s\n",
-        scalar(keys(%cpp_options)),
-        join(" ", keys(%cpp_options)));
+    print_options(%cpp_options, $print_descriptions);
 }
 
 main();
