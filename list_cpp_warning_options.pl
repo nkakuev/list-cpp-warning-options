@@ -76,7 +76,7 @@ sub print_options
     my $print_descriptions = pop(@_);
     my %options            = @_;
 
-    foreach my $option (keys(%options))
+    foreach my $option (sort(keys(%options)))
     {
         $print_descriptions
             ? printf("  %-35s %s\n", $option, $options{$option})
@@ -86,22 +86,68 @@ sub print_options
     print "\n";
 }
 
+sub print_help
+{
+print << "END_HELP";
+OVERVIEW: Print GCC warning options applicable to C++ code
+USAGE:    $0 [options]
+OPTIONS:
+  -h, --help                Print this message.
+  -p, --print-descriptions  Print option descriptions in the following format:
+                            -Wuseless-cast        Warn about useless casts.
+                            -Wunused-label        Warn when a label is unused.
+                            ...
+  -e, --enabled-only        Print only currently enabled warning options.
+                            Useful to see what you have so far.
+  -d, --disabled-only       Print only currently disabled warning options.
+                            Useful to see what else can be enabled.
+  GCC warning options       Assorted GCC warning options: -Wall, -Wextra,
+                            -Wno-deprecated, etc.
+                            Use with `--enabled-only` or `--disabled-only`.
+
+  Options `--enabled-only` and `--disabled-only` cannot be used together.
+END_HELP
+}
+
 sub get_cmd_arguments
 {
     my %arguments;
 
     foreach my $argument (@ARGV)
     {
-        if    ($argument eq "--print-descriptions") { $arguments{"print_descriptions"} = 1;           }
-        elsif ($argument eq "--enabled-only")       { $arguments{"enabled_only"}       = 1;           }
-        elsif ($argument eq "--disabled-only")      { $arguments{"disabled_only"}      = 1;           }
-        elsif ($argument =~ /-W(no-)?/)             { push(@{$arguments{"gcc_warnings"}}, $argument); }
-        else                                        { die("Unknown argument: $argument");             }
+        if ($argument eq "-h" || $argument eq "--help")
+        {
+            print_help();
+            exit(0);
+        }
+        elsif ($argument eq "-p" || $argument eq "--print-descriptions")
+        {
+            $arguments{"print_descriptions"} = 1;
+        }
+        elsif ($argument eq "-e" || $argument eq "--enabled-only")
+        {
+            $arguments{"enabled_only"} = 1;
+        }
+        elsif ($argument eq "-d" || $argument eq "--disabled-only")
+        {
+            $arguments{"disabled_only"} = 1;
+        }
+        elsif ($argument =~ /-W(no-)?/)
+        {
+            push(@{$arguments{"gcc_warnings"}}, $argument);
+        }
+        else
+        {
+            print("Unknown argument: $argument\n");
+            print_help();
+            exit(1);
+        }
     }
 
     if ($arguments{"enabled_only"} && $arguments{"disabled_only"})
     {
-        die("Options `--enabled-only` and `--disabled-only` cannot be used together");
+        print_help();
+        exit(1);
     }
 
     return %arguments;
