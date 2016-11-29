@@ -9,8 +9,8 @@ sub get_warning_options
 {
     my %valid_options;
 
-    my $output = `gcc --help=warnings`;
-    my @lines  = split("\n", $output);
+    my @lines  = split("\n", `gcc --help=warnings`);
+    my $last_option = "";
 
     foreach my $line (@lines)
     {
@@ -20,8 +20,32 @@ sub get_warning_options
 
         if (defined($option))
         {
-            if ($option =~ /-W[^=]+[^-]$/) { $valid_options{$option} = $description;}
-            if ($option =~ /(-W.*)=$/) { delete($valid_options{$option}); }
+            if ($option =~ /-W[^=]+[^-=]$/)
+            {
+                # Special case: although it's not specified, all options
+                # that start with `-Wformat` require a mandatory argument
+                # and thus should be ignored:
+                if ($option !~ /-Wformat/)
+                {
+                    $valid_options{$option} = $description;
+                    $last_option = $option;
+                }
+            }
+            elsif ($option =~ /-W.+=$/)
+            {
+                # Sometimes GCC lists options that take arguments twice:
+                # -Wstrict-overflow     Warn about optimizations ...
+                # -Wstrict-overflow=    Warn about optimizations ...
+                # So if we found `-Wstrict-overflow=` we should ignore it
+                # and delete `-Wstrict-overflow` as well:
+                delete($valid_options{$option});
+            }
+            elsif ($option !~ /^-/ && $last_option)
+            {
+                # Concatenate description if it was split into two lines:
+                $line =~ s/^\s+//;
+                $valid_options{$last_option} .= " $line";
+            }
         }
     }
 
@@ -38,7 +62,7 @@ sub get_cpp_options
     my @lines  = split("\n", $output);
     foreach my $line (@lines)
     {
-        if ($line =~ /command line option ‘(.*)’ is valid/)
+        if ($line =~ /command line option ‘(.+)’ is valid/)
         {
             delete($options{$1});
         }
@@ -111,7 +135,7 @@ sub filter_options
     return %filtered_options;
 }
 
-sub main()
+sub main
 {
     my %arguments = get_cmd_arguments();
 
