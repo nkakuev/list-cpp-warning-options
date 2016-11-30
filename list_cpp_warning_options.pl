@@ -55,14 +55,18 @@ sub get_warning_options
 sub get_cpp_options
 {
     my %options = @_;
-
     my (undef, $filename) = tempfile();
-    my $output = `gcc -x c++ -fsyntax-only ${\join(" ", keys(%options))} $filename 2>&1`;
+
+    # GCC uses the LC_CTYPE environment variable to determine what quotation
+    # marks to use. If it's *.UTF-8 GCC will use ‘fancy’ quotes that don't
+    # play well with character classes in regular expressions. Let's force it
+    # to use ANSI quotes:
+    my $output = `LC_CTYPE="C" gcc -x c++ -fsyntax-only ${\join(" ", keys(%options))} $filename 2>&1`;
 
     my @lines  = split("\n", $output);
     foreach my $line (@lines)
     {
-        if ($line =~ /command line option [‘'](.+)[’'] is valid/)
+        if ($line =~ /command line option '(.+)' is valid/)
         {
             delete($options{$1});
         }
