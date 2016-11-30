@@ -62,7 +62,7 @@ sub get_cpp_options
     my @lines  = split("\n", $output);
     foreach my $line (@lines)
     {
-        if ($line =~ /command line option ‘(.+)’ is valid/)
+        if ($line =~ /command line option [‘'](.+)[’'] is valid/)
         {
             delete($options{$1});
         }
