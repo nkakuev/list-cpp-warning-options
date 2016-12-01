@@ -33,5 +33,6 @@ OPTIONS:
 
 * Ignores `-f` options
 * Ignores `-W` options that take arguments
+* Ignores `-Wsystem-headers` to avoid noisy output
 * Uses whatever `gcc` it finds in `$PATH`
 

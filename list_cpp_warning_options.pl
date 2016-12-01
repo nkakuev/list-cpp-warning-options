@@ -22,10 +22,13 @@ sub get_warning_options
         {
             if ($option =~ /-W[^=]+[^-=]$/)
             {
-                # Special case: although it's not specified, all options
+                # Special cases:
+                # 1) Although it's not specified, all options
                 # that start with `-Wformat` require a mandatory argument
-                # and thus should be ignored:
-                if ($option !~ /-Wformat/)
+                # and thus should be ignored;
+                # 2) The `-Wsystem-headers` tells GCC to display warnings
+                # from systems headers, which is usually not desired.
+                if ($option !~ /-W(format|system-headers)/)
                 {
                     $valid_options{$option} = $description;
                     $last_option = $option;
