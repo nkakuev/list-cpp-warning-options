@@ -10,7 +10,9 @@ sub get_warning_options
     my %valid_options;
 
     my @lines  = split("\n", `gcc --help=warnings`);
+
     my $last_option = "";
+    my $last_option_skipped = 0;
 
     foreach my $line (@lines)
     {
@@ -31,7 +33,13 @@ sub get_warning_options
                 if ($option !~ /-W(format|system-headers)/)
                 {
                     $valid_options{$option} = $description;
+
                     $last_option = $option;
+                    $last_option_skipped = 0;
+                }
+                else
+                {
+                    $last_option_skipped = 1;
                 }
             }
             elsif ($option =~ /-W.+=$/)
@@ -43,7 +51,7 @@ sub get_warning_options
                 # and delete `-Wstrict-overflow` as well:
                 delete($valid_options{$option});
             }
-            elsif ($option !~ /^-/ && $last_option)
+            elsif ($option !~ /^-/ && !$last_option_skipped)
             {
                 # Concatenate description if it was split into two lines:
                 $line =~ s/^\s+//;
